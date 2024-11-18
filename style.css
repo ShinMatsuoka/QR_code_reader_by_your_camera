@@ -1,0 +1,114 @@
+body {
+	font-family: "メイリオ", "Meiryo", sans-serif;
+	color: #333;
+	max-width: 640px;
+/*	margin: 0 auto;
+	position: relative;
+	padding: 5px;
+	font-size: 16px;*/
+}
+
+#githubLink {
+  position: absolute;
+  right: 0;
+  top: 12px;
+  color: #2D99FF;
+}
+
+h1 {
+  margin: 10px 0;
+  font-size: 40px;
+}
+
+#loadingMessage {
+  text-align: center;
+  padding: 40px;
+  background-color: #eee;
+}
+
+#canvas {
+  width: 320px;
+  position: absolute;
+}
+
+#output {
+  margin-top: 20px;
+  background: #eee;
+  padding: 10px;
+  padding-bottom: 0;
+}
+
+#output div {
+  padding-bottom: 10px;
+  word-wrap: break-word;
+}
+
+#noQRFound {
+  text-align: center;
+}
+#wrap	{
+	min-height: 83vh;
+	display: flex;
+	flex-direction: column;
+}
+.header		{
+	text-align: center;
+	background-color: navy;
+	color: white;
+	font-weight: bold;
+	font-size: 16px;
+	padding: 2px;
+}
+.footer	{
+	margin-top: auto;
+	display: flex;
+	justify-content: space-around;
+}
+#dispArea	{
+	display: none;
+}
+table,tr,th,td	{
+	border: 1px solid;
+	border-color: silver;
+	border-collapse: collapse;
+	padding: 3px;
+}
+td	{
+	font-size: 1em;
+}
+/*table	{
+	margin: 0 auto;
+}*/
+.divBox	{
+	display: inline-block;
+	border: 1px solid silver;
+	border-radius: 5px;
+	background-color: aliceblue;
+	margin:0 5px 5px 0;
+}
+.divContent, .divItem	{
+	display: inline-block;
+	margin: 0 5px;
+}
+.textC	{
+	text-align: center;
+}
+.textR	{
+	text-align: right;
+}
+#canvas	{
+	position: absolute;
+	top: 20px;
+	left: 20px;
+}
+#Btn,#disp	{
+	font-size: 20px;
+}
+@media (max-width:375px)	{
+	#wrap,.header,.contents,.footer	{
+		width: 363px;
+	}
+	.hideF	{
+		display: none;
+	}
+}
