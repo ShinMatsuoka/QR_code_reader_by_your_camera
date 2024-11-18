@@ -1,0 +1,168 @@
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>jsQR Demo</title>
+<!-- <script src="./jsQR.js"></script> -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<link href="https://fonts.googleapis.com/css?family=Ropa+Sans" rel="stylesheet">
+<link href="style.css" rel="stylesheet">
+</head>
+<body>
+<h3>Useful QR decoder</h3>
+<p>Presented by Maruwa IT promotion group</p>
+<div id="loadingMessage">🎥 Unable to access video stream (please make sure you have a webcam enabled)</div>
+	<div><input type="button" value="Scan!" id="Btn"></div>
+	<div id="output" >
+	<canvas id="canvas" hidden></canvas>
+<!--		<div id="outputMessage">No QR code detected.</div>-->
+		<div ><b>Data:</b> <span id="outputData"></span></div>
+	</div>
+	<div id="EDI"></div>
+</body>
+<script>
+const EDIitems = [		//EDIかんばんの区切り文字
+	["9K20","EDIかんばん"],
+	["2L","納入先(統一企業コード)",2],
+	["1L","納入先受け入れ",2],
+	["16D","納入指示日",3],
+	["12D","発行日",3],
+	["9D","納入便",2],
+	["10K","納番",3,5],
+	["K","ページ/行番号",1],
+	["20P","背番号",3],
+	["P","品番",1],
+	["Q","収容数",1],
+	["4Q","納入数",2],
+	["17K","かんばん連番",3],
+	["2P0","リストの区切り",0],
+	["6V","出荷元",2],
+	["7V","発注元",2]
+]
+var video = document.createElement("video");
+var canvasElement = document.getElementById("canvas");
+var canvas = canvasElement.getContext("2d");
+var loadingMessage = document.getElementById("loadingMessage");
+//		var outputContainer = document.getElementById("output");
+//		var outputMessage = document.getElementById("outputMessage");
+var outputData = document.getElementById("outputData");
+
+//		document.getElementById("video2").appendChild(video);
+let strm;
+function drawLine(begin, end, color) {
+	canvas.beginPath();
+	canvas.moveTo(begin.x, begin.y);
+	canvas.lineTo(end.x, end.y);
+	canvas.lineWidth = 4;
+	canvas.strokeStyle = color;
+	canvas.stroke();
+}
+let videoStart = () =>	{
+	// Use facingMode: environment to attemt to get the front camera on phones
+	strm = navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(function(stream) {
+		strm = stream;
+		video.srcObject = stream;
+		video.setAttribute("playsinline", true); // required to tell iOS safari we don't want fullscreen
+		video.play();
+//		 requestAnimationFrame(tick);
+	});
+}
+
+function tick() {
+	loadingMessage.innerText = "⌛ Loading video..."
+	if (video.readyState === video.HAVE_ENOUGH_DATA) {
+		loadingMessage.hidden = true;
+		canvasElement.hidden = false;
+//		outputContainer.hidden = false;
+
+		canvasElement.height = video.videoHeight;
+		canvasElement.width = video.videoWidth;
+		canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+		var imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height); 
+		var code = jsQR(imageData.data, imageData.width, imageData.height, {
+			inversionAttempts: "dontInvert",
+		});
+		if (code) {
+			drawLine(code.location.topLeftCorner, code.location.topRightCorner, "#FF3B58");
+			drawLine(code.location.topRightCorner, code.location.bottomRightCorner, "#FF3B58");
+			drawLine(code.location.bottomRightCorner, code.location.bottomLeftCorner, "#FF3B58");
+			drawLine(code.location.bottomLeftCorner, code.location.topLeftCorner, "#FF3B58");
+ //		 outputMessage.hidden = true;
+ //		 outputData.parentElement.hidden = false;
+//			outputData.innerText = code.data;
+		
+			outputData.innerText = convBin2Str(code.binaryData);
+			if(outputData.innerText == "")	{//値が空なら読み取り継続
+				requestAnimationFrame(tick);
+			}
+			let divEDI = document.getElementById("EDI");
+			divEDI.textContent = "";
+			//読み取ったQRがEDI
+			if(outputData.innerText.substr(0,3) == "[)>")	{
+				divEDI.innerHTML += "<p>QR code for an EDI</p>";
+				outputData.innerText.split("]").map((v,i) =>	{
+					if(i > 1)	{
+						let val;
+						val = EDIitems.reduce((str,w) =>	{
+							if(v.substr(0,w[2]) == w[0])	{
+								str = w[0] + "(" + w[1]+"): "+v.substr(w[2],w[3]);
+							}
+							return str;
+						},"");
+						if(!val)
+							val = "*" + v;
+						divEDI.innerHTML += "<div>" + val + "</div>";
+					}
+				})
+		}
+//		setTimeout(() =>	{
+			btn.click();
+//		},100);
+		} else {
+//			outputMessage.hidden = false;
+//			outputData.parentElement.hidden = true;
+		}
+	}
+	if(videoStreamingF) {
+		requestAnimationFrame(tick);
+	} else	{
+		setTimeout(() =>	{
+		canvasElement.hidden = true;
+
+	},1000)
+	}
+}
+//----------------------------------
+//バイナリ配列がEDIだったら区切り文字変換
+const convBin2Str = (buf) =>	{
+	if(buf.reduce((str,v,i) =>	{	//EDIのQRデータか?
+			if(i < 3)
+				str += v;
+			return str;
+		},"") == 914162)	{
+			buf = buf.reduce((arr,v) =>	{
+				if(v == 29 || v == 30)	arr.push(93);
+				else arr.push(v);
+				return arr;
+			},[]);
+	}
+	return String.fromCharCode.apply(null, buf).trim();
+}
+let videoStreamingF = false;
+	let btn = document.getElementById("Btn");
+	btn.addEventListener("click",() =>	{
+		if(!videoStreamingF)	{
+			videoStreamingF = true;
+			btn.value = "Close";
+			videoStart();
+			requestAnimationFrame(tick);
+		} else	{
+			videoStreamingF = false;
+			btn.value = "Scan";
+			strm.getTracks().forEach(track => {
+				track.stop();
+			})
+		}
+	})
+	</script>
+</html>
